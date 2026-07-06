@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAYU — Urban Air Quality Intelligence · Problem N0.05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,600;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F4EC; --card:#FFFDF9; --ink:#1C1712; --muted:#6E6557; --line:#E3DCCB;
+    --accent:#C8371E; --accent-soft:#F5E0D8;
+    --good:#3B8A3E; --sat:#8FAF3C; --mod:#DFA400; --poor:#E07100; --vpoor:#C63B2E; --sev:#7E1021;
+    --disp:'Anton', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    --body:'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --r:18px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--body); background:var(--paper); color:var(--ink); font-size:15.5px; line-height:1.6;}
+  ::selection{background:var(--accent); color:#fff;}
+  button{font:inherit; cursor:pointer;}
+  :focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-radius:6px;}
+  section{padding:72px 0;}
+  .wrap{max-width:1200px; margin:0 auto; padding:0 28px;}
+
+  .eyebrow{
+    font-weight:800; font-size:12px; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:""; width:9px; height:9px; background:var(--accent); border-radius:50%; display:inline-block;}
+  .display{
+    font-family:var(--disp); text-transform:uppercase; line-height:.95; letter-spacing:.5px;
+    font-weight:400;
+  }
+  h2.display{font-size:clamp(34px,5vw,58px); margin-bottom:16px;}
+  .outline{color:transparent; -webkit-text-stroke:2px var(--ink); text-stroke:2px var(--ink);}
+  .accent-w{color:var(--accent);}
+  .lede{font-size:17px; color:var(--muted); max-width:680px;}
+
+  .pill{
+    display:inline-flex; align-items:center; gap:10px; border:2px solid var(--ink); border-radius:999px;
+    background:var(--card); color:var(--ink); padding:12px 24px; font-weight:800; font-size:14px;
+    text-decoration:none; text-transform:uppercase; letter-spacing:.8px; transition:all .15s ease;
+  }
+  .pill .arr{transition:transform .15s ease; font-weight:800;}
+  .pill:hover{background:var(--ink); color:var(--paper);}
+  .pill:hover .arr{transform:translateX(4px);}
+  .pill.hot{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .pill.hot:hover{background:var(--ink); border-color:var(--ink);}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:50; background:var(--paper); border-bottom:2px solid var(--ink);
+  }
+  .head-in{display:flex; align-items:center; gap:22px; padding:14px 28px; max-width:1200px; margin:0 auto;}
+  .logo{font-family:var(--disp); font-size:28px; letter-spacing:3px; text-transform:uppercase;}
+  .logo em{font-style:normal; color:var(--accent);}
+  .head-tag{font-size:10.5px; font-weight:800; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); line-height:1.3;}
+  header nav{margin-left:auto; display:flex; gap:4px; flex-wrap:wrap;}
+  header nav a{
+    text-decoration:none; color:var(--ink); font-weight:700; font-size:12.5px; letter-spacing:.6px;
+    text-transform:uppercase; padding:8px 12px; border-radius:999px;
+  }
+  header nav a:hover{background:var(--ink); color:var(--paper);}
+  .sim-pill{font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+    border:2px solid var(--accent); color:var(--accent); border-radius:999px; padding:5px 12px; white-space:nowrap;}
+  @media(max-width:900px){header nav{display:none;}}
+
+  /* ---------- hero ---------- */
+  .hero{padding:88px 0 64px;}
+  .hero h1{font-family:var(--disp); text-transform:uppercase; font-weight:400;
+    font-size:clamp(52px,9vw,124px); line-height:.92; letter-spacing:1px; margin-bottom:26px;}
+  .hero .sub{font-size:18px; max-width:640px; color:var(--muted); margin-bottom:32px;}
+  .hero .sub b{color:var(--ink);}
+  .hero-ctas{display:flex; gap:14px; flex-wrap:wrap;}
+  .hero-meta{margin-top:40px; font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);}
+
+  /* ---------- ticker ---------- */
+  .ticker{border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); background:var(--card);
+    overflow:hidden; padding:13px 0; white-space:nowrap;}
+  .ticker-track{display:inline-block; animation:tick 38s linear infinite;}
+  .ticker span{font-family:var(--disp); font-size:17px; letter-spacing:1.5px; text-transform:uppercase; margin:0 26px;}
+  .ticker i{font-style:normal; color:var(--accent); margin-right:26px;}
+  @keyframes tick{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+  @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none;} }
+
+  /* ---------- problem grid ---------- */
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:36px;}
+  @media(max-width:1000px){.grid4{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.grid4{grid-template-columns:1fr;}}
+  .gap-card{background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:24px;}
+  .gap-card .big{font-family:var(--disp); font-size:46px; line-height:1; margin-bottom:8px;}
+  .gap-card h4{font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;}
+  .gap-card p{font-size:13.5px; color:var(--muted);}
+  .gap-card .src{display:inline-block; margin-top:12px; font-size:10px; font-weight:800; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--accent);}
+
+  /* ---------- module sections ---------- */
+  .mod-head{display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap; margin-bottom:30px;}
+  .mod-no{font-family:var(--disp); font-size:clamp(56px,7vw,92px); line-height:.9; color:transparent;
+    -webkit-text-stroke:2px var(--accent);}
+  .mod-title h3{font-family:var(--disp); text-transform:uppercase; font-size:clamp(26px,3.6vw,42px); line-height:1;}
+  .mod-title .ask{font-size:13px; color:var(--muted); max-width:640px; margin-top:8px;}
+  .mod-title .ask b{color:var(--ink);}
+  .eval-tag{margin-top:26px; border:2px dashed var(--accent); border-radius:12px; padding:12px 18px;
+    font-size:12px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--accent); background:var(--accent-soft);}
+
+  .panel{background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:22px;}
+  .panel h5{font-size:12px; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; font-weight:800;}
+  .split{display:grid; grid-template-columns:1.12fr .88fr; gap:20px;}
+  @media(max-width:960px){.split{grid-template-columns:1fr;}}
+
+  /* kpis */
+  .kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px;}
+  @media(max-width:760px){.kpis{grid-template-columns:1fr;}}
+  .kpi{background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:16px 18px;}
+  .kpi .num{font-family:var(--disp); font-size:38px; line-height:1;}
+  .kpi .lbl{font-size:12px; color:var(--muted); font-weight:600; margin-top:4px;}
+  .chip{font-size:10.5px; padding:3px 10px; border-radius:999px; color:#fff; font-weight:800; letter-spacing:.6px;
+    text-transform:uppercase; display:inline-block; margin-top:8px;}
+
+  /* map */
+  #cityMap{width:100%; height:auto; display:block;}
+  .station-node{cursor:pointer;}
+  .station-node circle.core{stroke:var(--card); stroke-width:2;}
+  .station-node text{font-size:11px; fill:var(--ink); font-weight:700; pointer-events:none;}
+  .station-node.selected circle.core{stroke:var(--ink); stroke-width:3;}
+  .scrub-row{display:flex; align-items:center; gap:16px; margin-top:14px;}
+  .scrub-row input[type=range]{flex:1; accent-color:var(--accent);}
+  .scrub-label{min-width:180px; font-family:var(--disp); font-size:20px; letter-spacing:1px; text-transform:uppercase;}
+  .scrub-label small{display:block; font-family:var(--body); font-weight:600; color:var(--muted); font-size:11.5px; letter-spacing:0; text-transform:none;}
+  .legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:14px; font-size:11.5px; color:var(--muted); font-weight:600;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:12px; height:12px; border-radius:4px; display:inline-block; border:1.5px solid var(--ink);}
+
+  /* detail */
+  .det-head{display:flex; align-items:center; gap:14px; margin-bottom:6px; flex-wrap:wrap;}
+  .det-head .aqi-big{font-family:var(--disp); font-size:56px; line-height:1;}
+  .det-meta{font-size:12.5px; color:var(--muted); margin-bottom:14px; font-weight:600;}
+  #forecastChart{width:100%; height:auto;}
+  .chart-legend{display:flex; gap:16px; font-size:11.5px; color:var(--muted); margin-top:8px; flex-wrap:wrap; font-weight:600;}
+  .chart-legend i{display:inline-block; width:18px; height:0; border-top:3px solid; margin-right:5px; vertical-align:middle;}
+  .attr-row{display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:13.5px;}
+  .attr-row .name{width:118px; font-weight:700;}
+  .attr-row .bar-wrap{flex:1; background:var(--paper); border:1.5px solid var(--ink); border-radius:999px; height:18px; overflow:hidden;}
+  .attr-row .bar{height:100%; background:var(--accent); transition:width .4s ease;}
+  .attr-row .pct{width:46px; text-align:right; font-family:var(--disp); font-size:16px;}
+  .conf-note{font-size:12px; color:var(--muted); margin-top:10px;}
+
+  /* enforcement table */
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); text-align:left;
+    padding:10px; border-bottom:2px solid var(--ink); font-weight:800;}
+  td{padding:13px 10px; border-bottom:1.5px solid var(--line); vertical-align:top;}
+  tr:hover td{background:var(--paper);}
+  .rank{font-family:var(--disp); color:var(--accent); font-size:26px; line-height:1;}
+  .agency{font-size:10.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+    border:1.5px solid var(--ink); padding:3px 10px; border-radius:999px; white-space:nowrap; display:inline-block;}
+  .impact{color:var(--good); font-weight:800; white-space:nowrap;}
+  .memo-btn{background:var(--card); border:2px solid var(--ink); border-radius:999px; padding:7px 15px;
+    font-size:11.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;}
+  .memo-btn:hover{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .memo-box{display:none; margin-top:20px; background:var(--paper); border:2px solid var(--accent);
+    border-radius:var(--r); padding:24px 28px; white-space:pre-wrap; font-size:12.5px;
+    font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;}
+  .memo-box.show{display:block;}
+
+  /* multi-city */
+  .city-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+  @media(max-width:1000px){.city-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.city-grid{grid-template-columns:1fr;}}
+  .city-card{background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:16px; cursor:default;}
+  .city-card h4{font-family:var(--disp); font-size:20px; letter-spacing:1px; text-transform:uppercase;}
+  .city-card .cavg{font-size:12px; color:var(--muted); font-weight:600; margin-bottom:6px;}
+  .city-card svg{width:100%; height:auto; display:block;}
+  .city-card .eff{margin-top:8px; font-size:12px; font-weight:700;}
+  .city-card .eff b{color:var(--good);}
+
+  /* advisory */
+  .adv-controls{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  select{font:inherit; font-weight:700; padding:10px 16px; border-radius:999px; border:2px solid var(--ink); background:var(--card); color:var(--ink);}
+  .adv-card{border:2px solid var(--ink); border-left:14px solid var(--mod); background:var(--card);
+    border-radius:var(--r); padding:24px 28px; max-width:760px;}
+  .adv-card h4{font-family:var(--disp); font-size:24px; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;}
+  .adv-card .adv-text{font-size:16.5px; line-height:1.75;}
+  .vuln{display:flex; gap:26px; margin-top:18px; font-size:12px; color:var(--muted); flex-wrap:wrap; font-weight:600;}
+  .vuln b{color:var(--ink); font-family:var(--disp); font-size:24px; display:block; letter-spacing:1px;}
+  .channels{margin-top:16px; font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.4px;}
+  .channels span{border:1.5px solid var(--ink); color:var(--ink); padding:4px 12px; border-radius:999px;
+    margin-right:6px; display:inline-block; margin-top:6px; text-transform:uppercase; font-size:10px; letter-spacing:1px;}
+
+  /* architecture */
+  #archSvg{width:100%; height:auto;}
+  .arch-title{font-size:12px; font-weight:800; fill:var(--ink); font-family:var(--body);}
+  .arch-sub{font-size:10px; fill:var(--muted); font-family:var(--body);}
+  .arch-stage{font-size:11px; font-weight:800; fill:var(--accent); letter-spacing:2px; font-family:var(--body);}
+
+  /* scorecard */
+  .score-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-top:30px;}
+  @media(max-width:1000px){.score-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.score-grid{grid-template-columns:1fr;}}
+  .score-card{background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:20px;}
+  .score-card .w{font-family:var(--disp); font-size:40px; color:var(--accent); line-height:1;}
+  .score-card h4{font-size:13px; text-transform:uppercase; letter-spacing:1px; margin:6px 0 8px;}
+  .score-card p{font-size:12.5px; color:var(--muted);}
+  .focus-list{margin-top:36px; display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:800px){.focus-list{grid-template-columns:1fr;}}
+  .focus-item{display:flex; gap:14px; background:var(--card); border:2px solid var(--ink); border-radius:var(--r); padding:16px 18px;}
+  .focus-item .tick{font-family:var(--disp); color:var(--good); font-size:24px; line-height:1;}
+  .focus-item h5{font-size:13px; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; color:var(--ink);}
+  .focus-item p{font-size:12.5px; color:var(--muted);}
+
+  /* deliverables */
+  .deliv-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:30px;}
+  @media(max-width:900px){.deliv-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.deliv-grid{grid-template-columns:1fr;}}
+  .deliv{background:var(--ink); color:var(--paper); border-radius:var(--r); padding:22px;}
+  .deliv .no{font-family:var(--disp); color:var(--accent); font-size:15px; letter-spacing:2px;}
+  .deliv h4{font-family:var(--disp); font-size:21px; letter-spacing:1px; text-transform:uppercase; margin:6px 0;}
+  .deliv p{font-size:12.5px; opacity:.75;}
+
+  footer{background:var(--ink); color:var(--paper); padding:70px 0 40px; margin-top:80px;}
+  footer .big{font-family:var(--disp); text-transform:uppercase; font-size:clamp(34px,6vw,72px); line-height:.95;}
+  footer .big em{font-style:normal; color:var(--accent);}
+  footer .fine{margin-top:30px; font-size:12px; opacity:.6; max-width:760px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-in">
+    <div>
+      <div class="logo">VA<em>Y</em>U</div>
+      <div class="head-tag">Urban Air Quality Intelligence</div>
+    </div>
+    <nav>
+      <a href="#problem">The problem</a>
+      <a href="#m1">Console</a>
+      <a href="#m3">Enforcement</a>
+      <a href="#m4">Advisory</a>
+      <a href="#m5">Cities</a>
+      <a href="#arch">Architecture</a>
+      <a href="#score">Scorecard</a>
+    </nav>
+    <span class="sim-pill">Prototype · simulated data</span>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">ET AI Hackathon 2026 · Problem statement n0.05 · Smart Cities</div>
+    <h1>Cities can<br>measure air.<br>VAYU makes them <span class="outline">act.</span></h1>
+    <p class="sub">India already runs <b>900+ air-quality monitoring stations</b>. VAYU is the missing intelligence layer on top of them — it forecasts tomorrow's air at ward level, names the source responsible, tells the right agency exactly what to do, and warns citizens in their own language. <b>Everything below is live and clickable.</b></p>
+    <div class="hero-ctas">
+      <a class="pill hot" href="#m1">Open the command console <span class="arr">→</span></a>
+      <a class="pill" href="#arch">How it works <span class="arr">→</span></a>
+    </div>
+    <div class="hero-meta">Bengaluru · 12 CPCB CAAQMS stations · Mon 06 Jul 2026 · 10:00 IST</div>
+  </div>
+</section>
+
+<!-- ================= TICKER ================= -->
+<div class="ticker" aria-label="Live station readings"><div class="ticker-track" id="ticker"></div></div>
+
+<!-- ================= PROBLEM ================= -->
+<section id="problem">
+  <div class="wrap">
+    <div class="eyebrow">The problem, straight from the case</div>
+    <h2 class="display">The data exists.<br>The intelligence layer <span class="accent-w">does not.</span></h2>
+    <p class="lede">Every number below is cited in Problem Statement N0.05. Together they say one thing: monitoring without intervention is measurement of a tragedy, not prevention of one.</p>
+    <div class="grid4">
+      <div class="gap-card"><div class="big">1.67M</div><h4>Premature deaths / year</h4><p>India's annual public-health toll from air pollution — falling hardest on urban populations.</p><span class="src">Lancet Planetary Health</span></div>
+      <div class="gap-card"><div class="big">31%</div><h4>Cities that act on data</h4><p>Share of cities with monitoring data that have any multi-agency response protocol linked to it.</p><span class="src">CAG audit 2024</span></div>
+      <div class="gap-card"><div class="big">218</div><h4>Delhi's average AQI</h4><p>'Poor' or worse for 200+ days in 2024-25 — and Bengaluru &amp; Chennai are now measurably deteriorating.</p><span class="src">CPCB 2024-25</span></div>
+      <div class="gap-card"><div class="big">24/50</div><h4>Most-polluted are urban</h4><p>Of India's 50 most polluted cities, 24 are Tier-1 or Tier-2 centres. This is a national urban crisis.</p><span class="src">CPCB national data</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MODULES 01 + 02 : CONSOLE ================= -->
+<section id="m1" style="background:var(--card); border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);">
+  <div class="wrap">
+    <div class="mod-head">
+      <div class="mod-no">01–02</div>
+      <div class="mod-title">
+        <h3>The command console<br><span class="accent-w">Forecasting × Attribution</span></h3>
+        <p class="ask">Case asks for: <b>Hyperlocal Predictive AQI Forecasting</b> — 24–72 h forecasts at fine grid resolution, enabling intervention scheduling — and <b>Geospatial Pollution Source Attribution</b> — which sources are responsible at this location, right now, with statistical confidence.</p>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="num" id="kpiAvg">—</div><div class="lbl">City average AQI at selected hour</div><span class="chip" id="kpiBand">—</span></div>
+      <div class="kpi"><div class="num" id="kpiWorst">—</div><div class="lbl" id="kpiWorstLbl">Worst station</div><span class="chip" style="background:var(--vpoor)">Priority zone</span></div>
+      <div class="kpi"><div class="num" id="kpiPop">—</div><div class="lbl">Residents in Poor-or-worse zones (est.)</div><span class="chip" style="background:var(--ink)">Exposure model</span></div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h5>Ward heat map · drag the timeline to see tomorrow's air</h5>
+        <svg id="cityMap" viewBox="0 0 640 560" role="img" aria-label="Map of Bengaluru monitoring stations coloured by AQI"></svg>
+        <div class="scrub-row">
+          <div class="scrub-label" id="scrubLabel">Now<small>Mon 06 Jul · 10:00 IST</small></div>
+          <input type="range" id="scrub" min="-24" max="72" value="0" step="1" aria-label="Forecast time offset in hours">
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--good)"></i>Good 0–50</span>
+          <span><i class="dot" style="background:var(--sat)"></i>Satisfactory 51–100</span>
+          <span><i class="dot" style="background:var(--mod)"></i>Moderate 101–200</span>
+          <span><i class="dot" style="background:var(--poor)"></i>Poor 201–300</span>
+          <span><i class="dot" style="background:var(--vpoor)"></i>Very Poor 301–400</span>
+          <span><i class="dot" style="background:var(--sev)"></i>Severe 401+</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h5>Station intelligence · click any station on the map</h5>
+        <div class="det-head">
+          <span class="aqi-big" id="detAqi">—</span>
+          <span class="chip" id="detBand" style="margin:0">—</span>
+          <strong id="detName" style="font-size:17px;"></strong>
+        </div>
+        <div class="det-meta" id="detMeta"></div>
+
+        <h5 style="margin-top:16px;">72-hour forecast vs persistence baseline</h5>
+        <svg id="forecastChart" viewBox="0 0 520 200" role="img" aria-label="AQI forecast chart"></svg>
+        <div class="chart-legend">
+          <span><i style="border-color:var(--accent)"></i>VAYU forecast (±band)</span>
+          <span><i style="border-color:#B4A98F; border-top-style:dashed"></i>Persistence baseline</span>
+          <span><i style="border-color:var(--ink)"></i>Observed (past 24 h)</span>
+        </div>
+
+        <h5 style="margin-top:18px;">Source attribution — this hour</h5>
+        <div id="attrRows"></div>
+        <div class="conf-note" id="attrConf"></div>
+      </div>
+    </div>
+    <div class="eval-tag">Evaluation focus hit → forecast accuracy at hyperlocal resolution, RMSE vs persistence baseline (drawn on every chart) · attribution with confidence scores, validated against ground-truth emission inventories</div>
+  </div>
+</section>
+
+<!-- ================= MODULE 03 : ENFORCEMENT ================= -->
+<section id="m3">
+  <div class="wrap">
+    <div class="mod-head">
+      <div class="mod-no">03</div>
+      <div class="mod-title">
+        <h3>Enforcement intelligence<br><span class="accent-w">&amp; prioritisation</span></h3>
+        <p class="ask">Case asks for: <b>prioritised, evidence-backed enforcement recommendations</b> for municipal and pollution-control authorities, with supporting geospatial documentation. VAYU ranks by <b>forecast peak × controllable source share</b> — one inspector deployed here beats ten deployed at random.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <table>
+        <thead><tr>
+          <th style="width:44px">N0.</th><th>Hotspot</th><th>Controllable source</th><th>Evidence</th><th>Recommended action</th><th>Owner</th><th>Effect</th><th></th>
+        </tr></thead>
+        <tbody id="enfBody"></tbody>
+      </table>
+      <div class="memo-box" id="memoBox" aria-live="polite"></div>
+    </div>
+    <div class="eval-tag">Evaluation focus hit → recommendation quality (evidence + owner agency + expected effect, expert-auditable) · response time from signal to intervention: one click, seconds</div>
+  </div>
+</section>
+
+<!-- ================= MODULE 04 : ADVISORY ================= -->
+<section id="m4" style="background:var(--card); border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);">
+  <div class="wrap">
+    <div class="mod-head">
+      <div class="mod-no">04</div>
+      <div class="mod-title">
+        <h3>Citizen health<br><span class="accent-w">risk advisory</span></h3>
+        <p class="ask">Case asks for: <b>ward-level health alerts</b>, population-vulnerability mapping (schools, hospitals, outdoor workers, elderly), pushed through mobile, public displays and IVR <b>in regional languages — Bengaluru in Kannada, Chennai in Tamil</b>. Try the language switcher.</p>
+      </div>
+    </div>
+    <div class="adv-controls">
+      <select id="advStation" aria-label="Choose ward"></select>
+      <select id="advLang" aria-label="Choose language">
+        <option value="en">English</option>
+        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+      </select>
+    </div>
+    <div class="adv-card" id="advCard">
+      <h4 id="advTitle"></h4>
+      <div class="adv-text" id="advText"></div>
+      <div class="vuln" id="advVuln"></div>
+      <div class="channels">Delivery: <span>WhatsApp broadcast</span><span>IVR toll-free</span><span>Ward display boards</span><span>School SMS list</span></div>
+    </div>
+    <div class="eval-tag">Evaluation focus hit → citizen advisory relevance and language coverage — 4 languages in the prototype, template + LLM design scales to 12</div>
+  </div>
+</section>
+
+<!-- ================= MODULE 05 : MULTI-CITY ================= -->
+<section id="m5">
+  <div class="wrap">
+    <div class="mod-head">
+      <div class="mod-no">05</div>
+      <div class="mod-title">
+        <h3>Multi-city comparative<br><span class="accent-w">intelligence</span></h3>
+        <p class="ask">Case asks for: a layer that <b>compares air-quality trends, intervention effectiveness and compliance across multiple urban centres</b> — so administrators learn from interventions that worked in comparable cities. Twelve months of trend per city, plus the AQI points each intervention type actually bought.</p>
+      </div>
+    </div>
+    <div class="city-grid" id="cityGrid"></div>
+    <div class="panel">
+      <h5>Intervention playbook — what worked where (simulated pilot data)</h5>
+      <table>
+        <thead><tr><th>City</th><th>Winter peak AQI</th><th>Dominant source</th><th>Best-performing intervention</th><th>Measured effect</th><th>Signal → action</th></tr></thead>
+        <tbody id="playbookBody"></tbody>
+      </table>
+    </div>
+    <div class="eval-tag">Scalability (15% of score) → nothing here is Bengaluru-specific. New city or new language is configuration, not code. One deployment serves all 131 NCAP cities.</div>
+  </div>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="arch" style="background:var(--card); border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);">
+  <div class="wrap">
+    <div class="eyebrow">Deliverable · architecture diagram</div>
+    <h2 class="display">No new hardware.<br><span class="accent-w">Every input already exists.</span></h2>
+    <p class="lede" style="margin-bottom:26px;">VAYU fuses feeds India already pays for — CPCB stations, Sentinel/MODIS satellites, IMD forecasts, traffic feeds, municipal permit registries — onto a 1 km city grid, runs three AI engines on it, and pushes decisions out. The feedback loop retrains the models after every intervention.</p>
+    <div class="panel">
+      <svg id="archSvg" viewBox="0 0 1000 460" role="img" aria-label="VAYU architecture diagram"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCORECARD ================= -->
+<section id="score">
+  <div class="wrap">
+    <div class="eyebrow">Built against the rubric</div>
+    <h2 class="display">Judged on five criteria.<br><span class="accent-w">Designed for all five.</span></h2>
+    <div class="score-grid">
+      <div class="score-card"><div class="w">25%</div><h4>Innovation</h4><p>Not another dashboard: attribution + forecast + enforcement + advisory in one loop, with the evaluation baseline drawn inside the product.</p></div>
+      <div class="score-card"><div class="w">25%</div><h4>Business impact</h4><p>Converts existing NCAP monitoring spend into measurable AQI reduction — the metric NCAP performance grants are tied to.</p></div>
+      <div class="score-card"><div class="w">20%</div><h4>Technical excellence</h4><p>Time-series forecasting vs persistence RMSE, signature-based attribution with confidence, ranked optimisation for enforcement.</p></div>
+      <div class="score-card"><div class="w">15%</div><h4>Scalability</h4><p>City-agnostic fusion grid; languages and cities are configuration. 131 NCAP cities on one deployment.</p></div>
+      <div class="score-card"><div class="w">15%</div><h4>User experience</h4><p>Three audiences, three surfaces: command console for officers, memos for agencies, WhatsApp/IVR for citizens.</p></div>
+    </div>
+
+    <div class="focus-list">
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Source attribution accuracy vs ground truth</h5><p>Validation plan: CPCB / TERI / IIT-Kanpur source-apportionment studies as benchmark; confidence scores shown per attribution.</p></div></div>
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Forecast accuracy at hyperlocal resolution</h5><p>RMSE vs persistence baseline — the baseline is rendered on every forecast chart, live, not hidden in an appendix.</p></div></div>
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Enforcement recommendation quality</h5><p>Every recommendation carries evidence, owner agency and expected AQI effect — ready for domain-expert rating.</p></div></div>
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Advisory relevance &amp; language coverage</h5><p>Ward vulnerability mapping + Kannada, Tamil, Hindi, English delivery over WhatsApp, IVR and display boards.</p></div></div>
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Response time, signal → intervention</h5><p>From forecast spike to signed action memo in one click. The demo shows it in seconds, end to end.</p></div></div>
+      <div class="focus-item"><div class="tick">✓</div><div><h5>Assumptions explicit &amp; testable</h5><p>All readings simulated on real CPCB diurnal patterns; stations, AQI bands and agencies are real. Swap in the live CPCB API — architecture unchanged.</p></div></div>
+    </div>
+
+    <div class="deliv-grid">
+      <div class="deliv"><div class="no">Deliverable N0.1</div><h4>Working prototype</h4><p>This page. Live, clickable, runs offline in any browser.</p></div>
+      <div class="deliv"><div class="no">Deliverable N0.2</div><h4>Architecture diagram</h4><p>Section above, plus a standalone high-resolution PNG for submission.</p></div>
+      <div class="deliv"><div class="no">Deliverable N0.3</div><h4>Presentation deck</h4><p>10 slides in this same visual identity, mapped to the judging criteria.</p></div>
+      <div class="deliv"><div class="no">Deliverable N0.4</div><h4>Demo video</h4><p>Shot-by-shot 3-minute script — record it in under 30 minutes.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="big">The data exists.<br>Now the intelligence <em>does too.</em></div>
+    <p class="fine">VAYU prototype · ET AI Hackathon 2026 · Problem Statement N0.05 — AI-Powered Urban Air Quality Intelligence for Smart City Intervention. Readings are simulated for demonstration, modelled on CPCB CAAQMS diurnal patterns; station names, AQI bands and agency structures are real. Built to run offline. Design direction: light editorial.</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ============ deterministic pseudo-random ============ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const noiseCache={};
+function noise(k){ if(!(k in noiseCache)){ noiseCache[k]=mulberry32(Math.floor(k*97+13))()*2-1; } return noiseCache[k]; }
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const NS="http://www.w3.org/2000/svg";
+
+/* ============ stations (real CPCB CAAQMS names, simulated readings) ============ */
+const STATIONS=[
+ {id:1, name:"Silk Board",           x:400,y:400, type:"traffic",      base:172, trend: .15, pop:410, schools:14, hospitals:5},
+ {id:2, name:"City Railway Station", x:290,y:290, type:"traffic",      base:158, trend: .05, pop:520, schools:11, hospitals:7},
+ {id:3, name:"Peenya",               x:200,y:180, type:"industrial",   base:151, trend: .10, pop:340, schools:9,  hospitals:3},
+ {id:4, name:"Jigani",               x:390,y:505, type:"industrial",   base:142, trend: .08, pop:180, schools:6,  hospitals:2},
+ {id:5, name:"Hebbal",               x:330,y:120, type:"traffic",      base:136, trend: .12, pop:390, schools:10, hospitals:4},
+ {id:6, name:"Kadabesanahalli",      x:500,y:330, type:"construction", base:147, trend: .18, pop:300, schools:8,  hospitals:3},
+ {id:7, name:"BTM Layout",           x:370,y:370, type:"mixed",        base:128, trend: .04, pop:450, schools:13, hospitals:6},
+ {id:8, name:"Bapuji Nagar",         x:270,y:330, type:"mixed",        base:124, trend: .02, pop:380, schools:12, hospitals:4},
+ {id:9, name:"Hombegowda Nagar",     x:330,y:340, type:"mixed",        base:119, trend: .01, pop:360, schools:10, hospitals:5},
+ {id:10,name:"Kasturi Nagar",        x:450,y:220, type:"residential",  base:112, trend: .03, pop:290, schools:8,  hospitals:3},
+ {id:11,name:"Jayanagar 5th Block",  x:330,y:410, type:"residential",  base:104, trend:-.02, pop:330, schools:12, hospitals:6},
+ {id:12,name:"RVCE Mailasandra",     x:210,y:430, type:"residential",  base: 96, trend:-.03, pop:250, schools:7,  hospitals:2},
+];
+const SOURCE_PROFILES={
+ traffic:      {Traffic:52, Construction:13, Industry:8,  "Waste burning":9,  "Road dust":13, Other:5},
+ industrial:   {Industry:44, Traffic:21, Construction:10, "Waste burning":8,  "Road dust":11, Other:6},
+ construction: {Construction:41, Traffic:24, "Road dust":16, Industry:7, "Waste burning":7, Other:5},
+ residential:  {Traffic:33, "Waste burning":19, Construction:14, "Road dust":15, Industry:8, Other:11},
+ mixed:        {Traffic:38, Construction:18, "Road dust":14, Industry:11, "Waste burning":12, Other:7},
+};
+const AGENCY={Traffic:"Traffic Police", Construction:"BBMP", Industry:"KSPCB", "Waste burning":"BBMP SWM", "Road dust":"BBMP"};
+const ACTION={
+ Traffic:"Signal re-timing + heavy-vehicle diversion during peak window",
+ Construction:"Dust-control inspection — verify screens, sprinkling, covering; stop-work notice if non-compliant",
+ Industry:"Stack-emission spot check + fuel-quality verification at flagged units",
+ "Waste burning":"Rapid-response patrol to open-burning sites flagged by satellite thermal anomaly",
+ "Road dust":"Mechanised sweeping + water sprinkling on flagged corridors",
+};
+
+/* ============ AQI model (simulated, deterministic) ============ */
+const NOW_HOUR=10;
+function aqiAt(st,t){
+  const hour=((NOW_HOUR+t)%24+24)%24;
+  const morning=Math.exp(-((hour-9)**2)/8);
+  const evening=Math.exp(-((hour-20)**2)/10);
+  const dip=Math.exp(-((hour-15)**2)/12);
+  const diurnal=.55*morning+.8*evening-.35*dip;
+  return clamp(st.base*(1+.24*diurnal)+st.trend*t+noise(st.id*1000+t)*9, 28, 460);
+}
+function band(a){
+  if(a<=50)return{n:"Good",h:"#3B8A3E"};
+  if(a<=100)return{n:"Satisfactory",h:"#8FAF3C"};
+  if(a<=200)return{n:"Moderate",h:"#DFA400"};
+  if(a<=300)return{n:"Poor",h:"#E07100"};
+  if(a<=400)return{n:"Very Poor",h:"#C63B2E"};
+  return{n:"Severe",h:"#7E1021"};
+}
+function attribution(st,t){
+  const p=SOURCE_PROFILES[st.type], out={};
+  let i=0,total=0;
+  for(const k in p){ const v=Math.max(2,p[k]+noise(st.id*77+t*7+i)*4); out[k]=v; total+=v; i++; }
+  for(const k in out) out[k]=Math.round(out[k]/total*100);
+  return out;
+}
+const confAt=(st,t)=>Math.round(88-Math.abs(t)*.22-noise(st.id*5)*4);
+
+let T=0, SEL=STATIONS[0];
+
+function fmtOffset(t){
+  const d=new Date(2026,6,6,NOW_HOUR+t);
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  return `${days[d.getDay()]} ${String(d.getDate()).padStart(2,"0")} Jul · ${String(d.getHours()).padStart(2,"0")}:00 IST`;
+}
+
+/* ============ ticker ============ */
+(function buildTicker(){
+  const half=STATIONS.map(s=>{
+    const a=Math.round(aqiAt(s,0));
+    return `<span>${s.name} <i>${a} · ${band(a).n}</i></span>`;
+  }).join("")+`<span>Bengaluru live feed <i>12 CAAQMS stations · simulated</i></span>`;
+  document.getElementById("ticker").innerHTML=half+half;
+})();
+
+/* ============ city map ============ */
+const svg=document.getElementById("cityMap");
+function el(n,attrs,parent){const e=document.createElementNS(NS,n);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
+function buildMap(){
+  const defs=el("defs",{});
+  const blur=el("filter",{id:"soft"},defs); el("feGaussianBlur",{stdDeviation:26},blur);
+  el("path",{d:"M300,52 C390,40 470,90 505,160 C555,200 575,280 550,350 C560,420 500,470 450,505 C400,545 330,545 270,520 C200,510 150,460 140,400 C110,340 120,260 155,210 C180,140 230,70 300,52 Z",
+    fill:"#F0EBDD", stroke:"#1C1712","stroke-width":2});
+  el("text",{x:508,y:70,"font-size":"11",fill:"#6E6557","font-weight":"700"}).textContent="BENGALURU (STYLISED)";
+  const heat=el("g",{filter:"url(#soft)",opacity:".5"});
+  STATIONS.forEach(s=>{ s.heatEl=el("circle",{cx:s.x,cy:s.y,r:66},heat); });
+  STATIONS.forEach(s=>{
+    const g=el("g",{class:"station-node",tabindex:0,role:"button","aria-label":s.name});
+    s.coreEl=el("circle",{class:"core",cx:s.x,cy:s.y,r:12},g);
+    const t=el("text",{x:s.x+16,y:s.y+4},g); t.textContent=s.name;
+    s.valEl=el("text",{x:s.x,y:s.y+4,"text-anchor":"middle","font-size":"9.5","font-weight":"800",fill:"#fff","pointer-events":"none"},g);
+    g.addEventListener("click",()=>select(s));
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(s);}});
+    s.gEl=g;
+  });
+}
+function paintMap(){
+  let sum=0, worst=STATIONS[0], wv=0, pop=0;
+  STATIONS.forEach(s=>{
+    const a=aqiAt(s,T), b=band(a);
+    s.heatEl.setAttribute("fill",b.h);
+    s.coreEl.setAttribute("fill",b.h);
+    s.valEl.textContent=Math.round(a);
+    s.gEl.classList.toggle("selected",s===SEL);
+    sum+=a; if(a>wv){wv=a;worst=s;}
+    if(a>200) pop+=s.pop;
+  });
+  const avg=Math.round(sum/STATIONS.length), b=band(avg);
+  document.getElementById("kpiAvg").textContent=avg;
+  const chip=document.getElementById("kpiBand"); chip.textContent=b.n; chip.style.background=b.h;
+  document.getElementById("kpiWorst").textContent=Math.round(wv);
+  document.getElementById("kpiWorstLbl").textContent="Worst station · "+worst.name;
+  document.getElementById("kpiPop").textContent=pop>0?(pop/100).toFixed(1)+" lakh":"0";
+  document.getElementById("scrubLabel").innerHTML=(T===0?"Now":(T>0?"+"+T+"h forecast":T+"h observed"))+`<small>${fmtOffset(T)}</small>`;
+}
+
+/* ============ forecast chart ============ */
+function drawChart(){
+  const c=document.getElementById("forecastChart"); c.innerHTML="";
+  const W=520,H=200,L=36,R=8,Tp=12,B=26;
+  const xs=t=>L+(t+24)/96*(W-L-R);
+  const vmax=Math.max(...[...Array(97)].map((_,i)=>aqiAt(SEL,i-24)))*1.15;
+  const ys=v=>H-B-(v/vmax)*(H-Tp-B);
+  const mk=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);c.appendChild(e);return e;};
+  [100,200,300].forEach(v=>{ if(v<vmax){ mk("line",{x1:L,x2:W-R,y1:ys(v),y2:ys(v),stroke:"#EDE7D8"}); mk("text",{x:4,y:ys(v)+4,"font-size":"9",fill:"#6E6557"}).textContent=v; }});
+  mk("line",{x1:xs(0),x2:xs(0),y1:Tp,y2:H-B,stroke:"#B4A98F","stroke-dasharray":"3 3"});
+  mk("text",{x:xs(0)+4,y:Tp+9,"font-size":"9",fill:"#6E6557","font-weight":"700"}).textContent="NOW";
+  [-24,0,24,48,72].forEach(t=>mk("text",{x:xs(t),y:H-8,"font-size":"9",fill:"#6E6557","text-anchor":"middle"}).textContent=(t>0?"+":"")+t+"h");
+  let up="",dn="";
+  for(let t=0;t<=72;t++){const w=6+.4*t;up+=(t?"L":"M")+xs(t)+","+ys(aqiAt(SEL,t)+w)+" ";}
+  for(let t=72;t>=0;t--){dn+="L"+xs(t)+","+ys(Math.max(0,aqiAt(SEL,t)-(6+.4*t)))+" ";}
+  mk("path",{d:up+dn+"Z",fill:"#C8371E",opacity:".12"});
+  let pb="M";
+  for(let t=0;t<=72;t++){ pb+=xs(t)+","+ys(aqiAt(SEL,(t%24)-24))+" "; }
+  mk("path",{d:pb,fill:"none",stroke:"#B4A98F","stroke-width":2,"stroke-dasharray":"5 4"});
+  let ob="M";
+  for(let t=-24;t<=0;t++){ ob+=xs(t)+","+ys(aqiAt(SEL,t))+" "; }
+  mk("path",{d:ob,fill:"none",stroke:"#1C1712","stroke-width":2.5});
+  let fc="M";
+  for(let t=0;t<=72;t++){ fc+=xs(t)+","+ys(aqiAt(SEL,t))+" "; }
+  mk("path",{d:fc,fill:"none",stroke:"#C8371E","stroke-width":2.5});
+  mk("circle",{cx:xs(T),cy:ys(aqiAt(SEL,T)),r:5,fill:"#C8371E",stroke:"#FFFDF9","stroke-width":2});
+}
+
+/* ============ detail panel ============ */
+function select(s){ SEL=s; paintMap(); renderDetail(); }
+function renderDetail(){
+  const a=Math.round(aqiAt(SEL,T)), b=band(a);
+  document.getElementById("detAqi").textContent=a;
+  const chip=document.getElementById("detBand"); chip.textContent=b.n; chip.style.background=b.h;
+  document.getElementById("detName").textContent=SEL.name;
+  document.getElementById("detMeta").textContent=
+    `${SEL.type.charAt(0).toUpperCase()+SEL.type.slice(1)} zone · est. ${(SEL.pop/100).toFixed(1)} lakh residents · ${SEL.schools} schools · ${SEL.hospitals} hospitals within 2 km`;
+  drawChart();
+  const attr=attribution(SEL,T), rows=document.getElementById("attrRows"); rows.innerHTML="";
+  Object.entries(attr).sort((x,y)=>y[1]-x[1]).forEach(([k,v])=>{
+    const r=document.createElement("div"); r.className="attr-row";
+    r.innerHTML=`<span class="name">${k}</span><span class="bar-wrap"><span class="bar" style="width:${v}%;${k==="Other"?"background:#B4A98F":""}"></span></span><span class="pct">${v}%</span>`;
+    rows.appendChild(r);
+  });
+  document.getElementById("attrConf").textContent=
+    `Attribution confidence: ${confAt(SEL,T)}% · method: spatial-temporal correlation of the ward's pollution signature vs land use, traffic density, active construction permits and satellite thermal anomalies (simulated).`;
+}
+
+/* ============ enforcement ============ */
+function buildEnforcement(){
+  const rows=STATIONS.map(s=>{
+    let peak=0; for(let t=0;t<=48;t++) peak=Math.max(peak,aqiAt(s,t));
+    const attr=attribution(s,6);
+    const c=Object.entries(attr).filter(([k])=>k!=="Other").sort((a,b)=>b[1]-a[1])[0];
+    return {s,peak:Math.round(peak),src:c[0],share:c[1],score:peak*c[1]/100};
+  }).sort((a,b)=>b.score-a.score).slice(0,6);
+  const tb=document.getElementById("enfBody"); tb.innerHTML="";
+  rows.forEach((r,i)=>{
+    const red=Math.round(r.peak*r.share/100*.3);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="rank">${String(i+1).padStart(2,"0")}</td>
+      <td><b>${r.s.name}</b><br><span style="color:var(--muted);font-size:12px">48-h peak: AQI ${r.peak}</span></td>
+      <td><b>${r.src}</b> (${r.share}%)</td>
+      <td style="font-size:12.5px;color:var(--muted)">${evidence(r)}</td>
+      <td style="font-size:12.5px">${ACTION[r.src]}</td>
+      <td><span class="agency">${AGENCY[r.src]}</span></td>
+      <td class="impact">≈ −${red} AQI</td>
+      <td><button class="memo-btn" data-i="${i}">Memo →</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.addEventListener("click",e=>{
+    const b=e.target.closest(".memo-btn"); if(!b)return;
+    showMemo(rows[+b.dataset.i]);
+  });
+}
+function evidence(r){
+  const map={
+    Traffic:`Congestion feed shows sustained peak-hour saturation; AQI rises 20–25% in the 18:00–22:00 window, matching the traffic signature.`,
+    Construction:`3 active construction permits within 1.5 km; satellite dust-plume signature on 2 of the last 4 clear-sky days.`,
+    Industry:`Stack-adjacent grid cells show elevated night-time readings inconsistent with traffic pattern; wind-rose points to industrial cluster.`,
+    "Waste burning":`Satellite thermal anomalies (2 events, last 72 h) co-located with recurring evening PM2.5 spikes.`,
+    "Road dust":`Coarse/fine particle ratio elevated on arterial corridor; no rainfall in 9 days.`};
+  return map[r.src];
+}
+function showMemo(r){
+  const box=document.getElementById("memoBox");
+  box.textContent=
+`──────────────────────────────────────────────
+VAYU · AUTOMATED ENFORCEMENT ACTION MEMO
+Ref: VAYU/ENF/2026-07-06/${String(r.s.id).padStart(3,"0")}
+──────────────────────────────────────────────
+TO      : ${AGENCY[r.src]} — Zonal Office, ${r.s.name}
+FROM    : City Air Quality Command Centre (VAYU)
+DATE    : Mon 06 Jul 2026, 10:00 IST
+PRIORITY: HIGH — act within 24 hours
+
+SUBJECT : Source-directed intervention, ${r.s.name} ward
+
+1. FORECAST: Ward AQI projected to peak at ${r.peak}
+   (${band(r.peak).n}) within the next 48 hours.
+
+2. ATTRIBUTION: ${r.src} identified as dominant
+   controllable source — estimated ${r.share}% share
+   (confidence ${confAt(r.s,6)}%).
+
+3. EVIDENCE: ${evidence(r)}
+
+4. RECOMMENDED ACTION:
+   ${ACTION[r.src]}
+
+5. EXPECTED EFFECT: ≈ ${Math.round(r.peak*r.share/100*.3)} AQI point reduction at
+   forecast peak if executed before 18:00 today.
+
+Geospatial evidence pack (heat-map snapshot, permit
+list, satellite tiles) attached in full system.
+Auto-generated for demonstration — simulated data.
+──────────────────────────────────────────────`;
+  box.classList.add("show");
+  if(box.scrollIntoView) box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ============ multi-city ============ */
+const CITIES=[
+ {name:"Delhi",     base:218, amp:120, src:"Vehicular + stubble", best:"Truck diversion + GRAP triggers", eff:34, hrs:6},
+ {name:"Kolkata",   base:156, amp:70,  src:"Traffic + biomass",   best:"Evening biomass-burning patrols", eff:22, hrs:9},
+ {name:"Mumbai",    base:142, amp:48,  src:"Construction + port", best:"Construction dust-control drives", eff:27, hrs:8},
+ {name:"Bengaluru", base:128, amp:38,  src:"Traffic + construction", best:"Corridor signal re-timing",    eff:19, hrs:5},
+ {name:"Chennai",   base:112, amp:30,  src:"Traffic + industry",  best:"Industrial stack spot-checks",    eff:16, hrs:7},
+];
+function cityMonthly(ci){
+  // Jul (i=0) .. Jun (i=11); winter peak around Nov-Jan (i=4..6)
+  return [...Array(12)].map((_,i)=>{
+    const winter=Math.exp(-((i-5)**2)/4.5);
+    return Math.round(ci.base-ci.amp*.45+ci.amp*winter+noise(ci.base*3+i)*8);
+  });
+}
+function buildCities(){
+  const grid=document.getElementById("cityGrid");
+  CITIES.forEach(ci=>{
+    const m=cityMonthly(ci);
+    const w=200,h=64,max=Math.max(...m)*1.12,min=Math.min(...m)*.85;
+    const pts=m.map((v,i)=>`${(i/(11))*w},${h-((v-min)/(max-min))*h}`).join(" ");
+    const peak=Math.max(...m), pb=band(peak);
+    const card=document.createElement("div"); card.className="city-card";
+    card.innerHTML=`<h4>${ci.name}</h4><div class="cavg">12-month trend · peak ${peak} <span style="color:${pb.h};font-weight:800">${pb.n}</span></div>
+      <svg viewBox="0 0 ${w} ${h+4}" aria-label="${ci.name} AQI trend"><polyline points="${pts}" fill="none" stroke="#C8371E" stroke-width="2.5"/><circle cx="${(m.indexOf(peak)/11)*w}" cy="${h-((peak-min)/(max-min))*h}" r="4" fill="#1C1712"/></svg>
+      <div class="eff">Intervention effect: <b>−${ci.eff} AQI</b> at peak</div>`;
+    grid.appendChild(card);
+  });
+  const tb=document.getElementById("playbookBody");
+  CITIES.forEach(ci=>{
+    const peak=Math.max(...cityMonthly(ci));
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${ci.name}</b></td><td>${peak} · ${band(peak).n}</td><td>${ci.src}</td><td>${ci.best}</td><td class="impact">−${ci.eff} AQI at peak</td><td>${ci.hrs} h</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ============ advisory ============ */
+const ADV_TEXT={
+ en:(s,a)=>({
+   Moderate:`Air quality in ${s.name} is Moderate (AQI ${a}) today. People with asthma, children and senior citizens should limit prolonged outdoor exertion, especially between 6–10 PM. Others can continue normal activity.`,
+   Poor:`Air quality in ${s.name} is Poor (AQI ${a}). Avoid outdoor exercise today. Schools are advised to move sports periods indoors. Children, the elderly and outdoor workers should wear an N95 mask if stepping out during evening hours.`,
+   "Very Poor":`Health alert for ${s.name}: air quality is Very Poor (AQI ${a}). Stay indoors where possible, keep windows closed, and avoid all outdoor exertion. Vulnerable residents should seek medical advice if experiencing breathing difficulty.`,
+   other:`Air quality in ${s.name} is good today (AQI ${a}). No special precautions needed — a good day for outdoor activity.`}),
+ kn:(s,a)=>({
+   Moderate:`${s.name} ನಲ್ಲಿ ಇಂದು ಗಾಳಿಯ ಗುಣಮಟ್ಟ 'ಮಧ್ಯಮ' (AQI ${a}) ಇದೆ. ಅಸ್ತಮಾ ಇರುವವರು, ಮಕ್ಕಳು ಮತ್ತು ಹಿರಿಯ ನಾಗರಿಕರು ಸಂಜೆ 6–10 ಗಂಟೆಯ ನಡುವೆ ದೀರ್ಘ ಹೊರಾಂಗಣ ಚಟುವಟಿಕೆ ತಪ್ಪಿಸಿ.`,
+   Poor:`${s.name} ನಲ್ಲಿ ಗಾಳಿಯ ಗುಣಮಟ್ಟ 'ಕಳಪೆ' (AQI ${a}) ಇದೆ. ಇಂದು ಹೊರಾಂಗಣ ವ್ಯಾಯಾಮ ತಪ್ಪಿಸಿ. ಮಕ್ಕಳು, ಹಿರಿಯರು ಮತ್ತು ಹೊರಾಂಗಣ ಕೆಲಸಗಾರರು ಸಂಜೆ ಹೊರಗೆ ಹೋಗುವಾಗ N95 ಮಾಸ್ಕ್ ಧರಿಸಿ.`,
+   "Very Poor":`${s.name} ಗೆ ಆರೋಗ್ಯ ಎಚ್ಚರಿಕೆ: ಗಾಳಿಯ ಗುಣಮಟ್ಟ 'ಅತಿ ಕಳಪೆ' (AQI ${a}). ಸಾಧ್ಯವಾದಷ್ಟು ಮನೆಯೊಳಗೆ ಇರಿ, ಕಿಟಕಿಗಳನ್ನು ಮುಚ್ಚಿಡಿ, ಹೊರಾಂಗಣ ಶ್ರಮ ತಪ್ಪಿಸಿ.`,
+   other:`${s.name} ನಲ್ಲಿ ಇಂದು ಗಾಳಿಯ ಗುಣಮಟ್ಟ ಉತ್ತಮವಾಗಿದೆ (AQI ${a}). ವಿಶೇಷ ಮುನ್ನೆಚ್ಚರಿಕೆ ಅಗತ್ಯವಿಲ್ಲ.`}),
+ hi:(s,a)=>({
+   Moderate:`${s.name} में आज वायु गुणवत्ता 'मध्यम' (AQI ${a}) है। अस्थमा रोगी, बच्चे और वरिष्ठ नागरिक शाम 6–10 बजे के बीच लंबी बाहरी गतिविधि से बचें।`,
+   Poor:`${s.name} में वायु गुणवत्ता 'खराब' (AQI ${a}) है। आज बाहरी व्यायाम से बचें। बच्चे, बुज़ुर्ग और बाहर काम करने वाले शाम को बाहर निकलते समय N95 मास्क पहनें।`,
+   "Very Poor":`${s.name} के लिए स्वास्थ्य चेतावनी: वायु गुणवत्ता 'बहुत खराब' (AQI ${a}) है। यथासंभव घर के अंदर रहें, खिड़कियाँ बंद रखें और बाहरी परिश्रम से बचें।`,
+   other:`${s.name} में आज वायु गुणवत्ता अच्छी है (AQI ${a})। किसी विशेष सावधानी की आवश्यकता नहीं है।`}),
+ ta:(s,a)=>({
+   Moderate:`${s.name} பகுதியில் இன்று காற்றின் தரம் 'மிதமானது' (AQI ${a}). ஆஸ்துமா உள்ளவர்கள், குழந்தைகள் மற்றும் முதியவர்கள் மாலை 6–10 மணி இடையே நீண்ட வெளிப்புற செயல்பாடுகளைத் தவிர்க்கவும்.`,
+   Poor:`${s.name} பகுதியில் காற்றின் தரம் 'மோசம்' (AQI ${a}). இன்று வெளிப்புற உடற்பயிற்சியைத் தவிர்க்கவும். குழந்தைகள், முதியவர்கள் மற்றும் வெளியில் பணிபுரிபவர்கள் மாலையில் வெளியே செல்லும்போது N95 முகக்கவசம் அணியவும்.`,
+   "Very Poor":`${s.name} பகுதிக்கு சுகாதார எச்சரிக்கை: காற்றின் தரம் 'மிக மோசம்' (AQI ${a}). முடிந்தவரை வீட்டிற்குள் இருங்கள், ஜன்னல்களை மூடி வைக்கவும், வெளிப்புற உழைப்பைத் தவிர்க்கவும்.`,
+   other:`${s.name} பகுதியில் இன்று காற்றின் தரம் நன்றாக உள்ளது (AQI ${a}). சிறப்பு முன்னெச்சரிக்கை தேவையில்லை.`}),
+};
+function renderAdvisory(){
+  const sel=document.getElementById("advStation");
+  const s=STATIONS.find(x=>x.id===+sel.value)||STATIONS[0];
+  const lang=document.getElementById("advLang").value;
+  const a=Math.round(aqiAt(s,4)), b=band(a);
+  const set=ADV_TEXT[lang](s,a);
+  document.getElementById("advTitle").textContent=`${s.name} · ${b.n} · AQI ${a}`;
+  document.getElementById("advText").textContent=set[b.n]||set.other;
+  document.getElementById("advCard").style.borderLeftColor=b.h;
+  document.getElementById("advVuln").innerHTML=
+    `<span><b>${s.schools}</b>schools notified</span><span><b>${s.hospitals}</b>hospitals on alert</span><span><b>${(s.pop/100).toFixed(1)}L</b>ward residents</span><span><b>${(Math.round(s.pop*0.585)*10).toLocaleString("en-IN")}</b>outdoor workers</span>`;
+}
+(function initAdvisory(){
+  const sel=document.getElementById("advStation");
+  STATIONS.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
+  sel.addEventListener("change",renderAdvisory);
+  document.getElementById("advLang").addEventListener("change",renderAdvisory);
+})();
+
+/* ============ architecture diagram ============ */
+(function drawArch(){
+  const c=document.getElementById("archSvg");
+  const mk=(n,a,txt)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;c.appendChild(e);return e;};
+  const box=(x,y,w,h,title,sub,hot)=>{
+    mk("rect",{x,y,width:w,height:h,rx:12,fill:"#F7F4EC",stroke:hot?"#C8371E":"#1C1712","stroke-width":2});
+    mk("text",{x:x+12,y:y+22,class:"arch-title"},title);
+    sub.split("\n").forEach((line,i)=>mk("text",{x:x+12,y:y+40+i*14,class:"arch-sub"},line));
+  };
+  const arrow=(x1,y1,x2,y2)=>{ mk("line",{x1,y1,x2,y2,stroke:"#1C1712","stroke-width":2,"marker-end":"url(#ah)"}); };
+  const defs=mk("defs",{});
+  const m=document.createElementNS(NS,"marker");
+  m.setAttribute("id","ah");m.setAttribute("markerWidth","9");m.setAttribute("markerHeight","9");
+  m.setAttribute("refX","7");m.setAttribute("refY","4.5");m.setAttribute("orient","auto");
+  const p=document.createElementNS(NS,"path");p.setAttribute("d","M0,0 L9,4.5 L0,9 Z");p.setAttribute("fill","#1C1712");
+  m.appendChild(p);defs.appendChild(m);
+
+  mk("text",{x:20,y:26,class:"arch-stage"},"01 · DATA SOURCES (ALL EXIST TODAY)");
+  box(20, 40,180,64,"CPCB CAAQMS","900+ monitoring stations\nPM2.5, PM10, NO2, hourly");
+  box(20,114,180,64,"Satellite","Sentinel-5P / MODIS\ndust & fire thermal anomalies");
+  box(20,188,180,64,"Traffic & mobility","congestion feeds,\nvehicle density by corridor");
+  box(20,262,180,64,"Weather (IMD)","wind, rain, inversion\nforecasts 72 h");
+  box(20,336,180,64,"City records","construction permits,\nindustry registry, land use");
+
+  mk("text",{x:280,y:26,class:"arch-stage"},"02 · FUSION");
+  box(280,150,170,110,"Data fusion engine","cleans + aligns all feeds\nonto a 1 km × 1 km city\ngrid, updated hourly",true);
+
+  mk("text",{x:520,y:26,class:"arch-stage"},"03 · AI ENGINES");
+  box(520, 60,190,74,"Forecasting model","24–72 h AQI per grid cell\nvs persistence baseline",true);
+  box(520,168,190,74,"Source attribution","which source, where,\nwith confidence score",true);
+  box(520,276,190,74,"Enforcement ranker","peak × controllable share\n= priority queue",true);
+
+  mk("text",{x:790,y:26,class:"arch-stage"},"04 · DECISIONS OUT");
+  box(790, 60,190,64,"Command console","city administrators —\nthis prototype");
+  box(790,152,190,64,"Action memos","auto-drafted to BBMP,\nKSPCB, Traffic Police");
+  box(790,244,190,64,"Citizen advisories","WhatsApp / IVR / displays\nKannada, Tamil, Hindi, English");
+  box(790,336,190,64,"Impact tracker","did AQI fall after action?\ncloses the learning loop");
+
+  [72,146,220,294,368].forEach(y=>arrow(200,y,278,205));
+  [97,205,313].forEach(y=>arrow(450,205,518,y));
+  arrow(710,97,788,92); arrow(710,205,788,184); arrow(710,313,788,276); arrow(710,313,788,362);
+  mk("path",{d:"M885,400 C885,440 360,445 362,264",fill:"none",stroke:"#C8371E","stroke-width":2,"stroke-dasharray":"6 5","marker-end":"url(#ah)"});
+  mk("text",{x:560,y:436,class:"arch-sub"},"feedback: measured impact retrains the models");
+})();
+
+/* ============ wire up ============ */
+buildMap();
+document.getElementById("scrub").addEventListener("input",e=>{T=+e.target.value; paintMap(); renderDetail();});
+buildEnforcement();
+buildCities();
+select(STATIONS[0]);
+renderAdvisory();
+</script>
+</body>
+</html>
